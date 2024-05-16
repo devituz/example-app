@@ -1,0 +1,42 @@
+{
+  "Teachers": [
+    {
+      "id": 1,
+      "course_name": "Instructions: how to practice answersing part1 speaking questions ",
+      "teachers_name": "Instructions: how to practice answersing part1 speaking questions ",
+      "teachers_img": "Instructions: how to practice answersing part1 speaking questions ",
+      "Category": [
+        {
+          "id": 1,
+          "name": "step 1",
+          "category_img": "step 1",
+          "Lessons": {
+            "id": 1,
+            "lesson_name": "For step instructions,check the 'Ideas' sections",
+            "lesson_video_url": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam ",
+            "lesson_video_description": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam "
+          }
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "course_name": "Instructions: how to practice answersing part1 speaking questions ",
+      "teachers_name": "Instructions: how to practice answersing part1 speaking questions ",
+      "teachers_img": "Instructions: how to practice answersing part1 speaking questions ",
+      "Category": [
+        {
+          "id": 1,
+          "name": "step 1",
+          "category_img": "step 1",
+          "Lessons": {
+            "id": 1,
+            "lesson_name": "For step instructions,check the 'Ideas' sections",
+            "lesson_video_url": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam ",
+            "lesson_video_description": "Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam "
+          }
+        }
+      ]
+    }
+  ]
+}
