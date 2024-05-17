@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->string('androidId');
             $table->string('windowsId');
+            $table->string('token')->unique()->nullable();
             $table->timestamps();
         });
     }

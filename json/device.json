@@ -1,7 +1,10 @@
 [
-  {
-    "id": ,
-    "androidId": "",
-    "windowsId": ""
-  }
+    {
+        "id":,
+        "androidId": "",
+        "windowsId": "",
+        "token": {
+            "bearer_token": ""
+        }
+    }
 ]

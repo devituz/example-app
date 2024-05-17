@@ -1,16 +1,13 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\Device;
 use App\Models\Kurslar;
 
 class DevicesController extends Controller
 {
-
-
-
     public function index()
     {
         $devices = Device::with('kurslars')->get();
@@ -25,6 +22,7 @@ class DevicesController extends Controller
 
     public function store(Request $request)
     {
+
         $validatedData = $request->validate([
             'androidId' => 'required|string',
             'windowsId' => 'required|string',
@@ -34,7 +32,12 @@ class DevicesController extends Controller
         $device = Device::create([
             'androidId' => $validatedData['androidId'],
             'windowsId' => $validatedData['windowsId'],
+            'token' => Str::random(40),
+
+
         ]);
+
+
 
         $device->kurslars()->sync($validatedData['kurslar_ids']);
 

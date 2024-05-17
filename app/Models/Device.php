@@ -12,6 +12,7 @@ class Device extends Model
     protected $fillable = [
         'androidId',
         'windowsId',
+        'token',
     ];
 
     public function kurslars()
