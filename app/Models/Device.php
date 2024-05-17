@@ -12,11 +12,12 @@ class Device extends Model
     protected $fillable = [
         'androidId',
         'windowsId',
-        'kurslar_id',
     ];
 
-    public function kurslar()
+    public function kurslars()
     {
-        return $this->belongsTo(Kurslar::class);
+        return $this->belongsToMany(Kurslar::class, 'device_kurslar');
     }
 }
+
+

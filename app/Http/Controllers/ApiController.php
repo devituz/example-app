@@ -1,53 +1,44 @@
 <?php
-
 namespace App\Http\Controllers;
 
-use App\Models\Kurslar;
-use App\Models\Category;
-use App\Models\Lessons;
-use Illuminate\Http\Request;
+use App\Models\Device;
 
 class ApiController extends Controller
 {
-    public function getData()
+    // Method to fetch all devices
+    public function getAllDevices()
     {
-        $kurslar = Kurslar::all();
+        $devices = Device::all(['id', 'androidId', 'windowsId']);
+        return response()->json($devices);
+    }
 
-        $data = [];
-
-        foreach ($kurslar as $kurs) {
-            $categoryData = [];
-
-            foreach ($kurs->categories as $category) {
-                $lessonData = [];
-
-                foreach ($category->lessons as $lesson) {
-                    $lessonData[] = [
-                        'id' => $category->id,
-                        'title' => $lesson->title,
-                        'video' => url('storage/' . $lesson->video), // Video URL ni to'g'rilash
-                        'description' => $lesson->description,
-                    ];
-                }
-
-                $categoryData[] = [
-                    'id' => $category->id,
-                    'category_name' => $category->category_name,
-                    'category_img' => url('storage/' . $category->category_img), // Rasm URL ni to'g'rilash
-                    'lessons' => $lessonData,
-                ];
-            }
-
-            $data[] = [
+    // Method to fetch a specific device by ID with its associated data
+    public function getDeviceWithCourses($id)
+    {
+        $device = Device::with(['kurslars.categories.lessons'])->findOrFail($id);
+        $courses = $device->kurslars->map(function ($kurs) {
+            return [
                 'id' => $kurs->id,
                 'courses_name' => $kurs->courses_name,
                 'teachers_name' => $kurs->teachers_name,
-                'teachers_img' => url('storage/' . $kurs->teachers_img), // Rasm URL ni to'g'rilash
-                'categories' => $categoryData,
+                'teachers_img' => $kurs->teachers_img,
+                'Category' => $kurs->categories->map(function ($category) {
+                    return [
+                        'id' => $category->id,
+                        'category_name' => $category->category_name,
+                        'category_img' => $category->category_img,
+                        'Lessons' => $category->lessons->map(function ($lesson) {
+                            return [
+                                'title' => $lesson->title,
+                                'video' => $lesson->video,
+                                'description' => $lesson->description,
+                            ];
+                        }),
+                    ];
+                }),
             ];
-        }
+        });
 
-        return response()->json($data);
+        return response()->json($courses);
     }
-
 }

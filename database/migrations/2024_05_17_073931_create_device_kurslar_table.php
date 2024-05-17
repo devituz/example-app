@@ -10,10 +10,10 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('devices', function (Blueprint $table) {
+        Schema::create('device_kurslar', function (Blueprint $table) {
             $table->id();
-            $table->string('androidId');
-            $table->string('windowsId');
+            $table->foreignId('device_id')->constrained('devices')->onDelete('cascade');
+            $table->foreignId('kurslar_id')->constrained('kurslar')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -23,6 +23,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('devices');
+        Schema::dropIfExists('device_kurslar');
     }
 };

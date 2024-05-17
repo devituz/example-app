@@ -8,6 +8,7 @@ class Kurslar extends Model
 {
     protected $fillable = ['teachers_name', 'teachers_img', 'courses_name'];
     protected $table = 'kurslar';
+
     public function categories()
     {
         return $this->hasMany(Category::class);
@@ -16,5 +17,10 @@ class Kurslar extends Model
     public function lessons()
     {
         return $this->hasManyThrough(Lessons::class, Category::class);
+    }
+
+    public function devices()
+    {
+        return $this->belongsToMany(Device::class, 'device_kurslar');
     }
 }

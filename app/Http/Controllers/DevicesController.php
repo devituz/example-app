@@ -8,12 +8,13 @@ use App\Models\Kurslar;
 
 class DevicesController extends Controller
 {
+
+
+
     public function index()
     {
-        $devices = Device::all();
-        $courses = Kurslar::all();
-
-        return view('devices.index', compact('devices', 'courses'));
+        $devices = Device::with('kurslars')->get();
+        return view('devices.index', compact('devices'));
     }
 
     public function create()
@@ -22,32 +23,59 @@ class DevicesController extends Controller
         return view('devices.store', compact('courses'));
     }
 
-
-
     public function store(Request $request)
     {
-
-
         $validatedData = $request->validate([
-
             'androidId' => 'required|string',
             'windowsId' => 'required|string',
-            'kurslar_id' => 'required|int',
+            'kurslar_ids' => 'required|array',
         ]);
 
         $device = Device::create([
             'androidId' => $validatedData['androidId'],
             'windowsId' => $validatedData['windowsId'],
-            'kurslar_id' => $validatedData['kurslar_id'],
-
-
         ]);
+
+        $device->kurslars()->sync($validatedData['kurslar_ids']);
 
         return redirect()->route('devices.index')->with('success', 'Device created successfully!');
     }
 
+    public function edit($id)
+    {
+        $device = Device::findOrFail($id);
+        $courses = Kurslar::all();
+        return view('devices.edit', compact('device', 'courses'));
+    }
 
+    public function update(Request $request, $id)
+    {
+        $validatedData = $request->validate([
+            'androidId' => 'required|string',
+            'windowsId' => 'required|string',
+            'kurslar_ids' => 'required|array',
+        ]);
 
+        $device = Device::findOrFail($id);
+        $device->update([
+            'androidId' => $validatedData['androidId'],
+            'windowsId' => $validatedData['windowsId'],
+        ]);
 
+        $device->kurslars()->sync($validatedData['kurslar_ids']);
 
+        return redirect()->route('devices.index')->with('success', 'Device updated successfully!');
+    }
+
+    public function destroy($id)
+    {
+        $device = Device::findOrFail($id);
+        $device->delete();
+        return redirect()->route('devices.index')->with('success', 'Device deleted successfully!');
+    }
 }
+
+
+
+
+

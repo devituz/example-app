@@ -26,13 +26,14 @@
                     <td>{{ $device->androidId }}</td>
                     <td>{{ $device->windowsId }}</td>
                     <td>
-                        @if ($device->kurslar)
-                            {{ $device->kurslar->courses_name }}
+                        @if ($device->kurslars)
+                            @foreach ($device->kurslars as $kurslar)
+                                {{ $kurslar->courses_name }}<br>
+                            @endforeach
                         @else
                             No Course Assigned
                         @endif
                     </td>
-
                     <td>
                         <a href="{{ route('devices.edit', $device->id) }}" class="btn btn-primary">Edit</a>
                         <form action="{{ route('devices.destroy', $device->id) }}" method="POST" class="d-inline">
