@@ -15,7 +15,6 @@ return new class extends Migration {
             $table->string('teachers_name');
             $table->string('teachers_img');
             $table->string('courses_name');
-
             $table->timestamps();
         });
     }
