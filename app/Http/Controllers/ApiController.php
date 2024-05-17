@@ -1,12 +1,13 @@
 <?php
+
 namespace App\Http\Controllers;
+
 use Illuminate\Http\Request;
 use App\Models\Device;
 
 
 class ApiController extends Controller
 {
-    // Method to fetch all devices
     public function getAllDevices()
     {
         $devices = Device::all(['id', 'androidId', 'windowsId', 'token']);
@@ -20,10 +21,18 @@ class ApiController extends Controller
                 ],
             ];
         });
-        return response()->json($devices);
+
+        $response = response()->json($devices);
+
+        // Check if the request is coming from a browser
+        if ($response->getStatusCode() == 200 && strpos(request()->header('User-Agent'), 'Mozilla') !== false) {
+            return response('<h1 align="center">404 Not Found</h1>', 404);
+        }
+
+        return $response;
     }
 
-    // Method to fetch a specific device by token
+
     public function getDeviceWithToken(Request $request)
     {
         $token = $request->bearerToken();
@@ -51,6 +60,11 @@ class ApiController extends Controller
                 }),
             ];
         });
+
+
+        if ($courses->isEmpty()) {
+            $courses = [['empty' => 'Sizda hechqanday kurs yo\'q']];
+        }
 
         return response()->json($courses);
     }

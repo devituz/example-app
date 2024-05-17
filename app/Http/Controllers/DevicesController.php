@@ -22,24 +22,21 @@ class DevicesController extends Controller
 
     public function store(Request $request)
     {
-
         $validatedData = $request->validate([
             'androidId' => 'required|string',
             'windowsId' => 'required|string',
-            'kurslar_ids' => 'required|array',
+            'kurslar_ids' => 'sometimes|array', // Make kurslar_ids optional
         ]);
 
         $device = Device::create([
             'androidId' => $validatedData['androidId'],
             'windowsId' => $validatedData['windowsId'],
             'token' => Str::random(40),
-
-
         ]);
 
-
-
-        $device->kurslars()->sync($validatedData['kurslar_ids']);
+        if (isset($validatedData['kurslar_ids'])) {
+            $device->kurslars()->sync($validatedData['kurslar_ids']);
+        }
 
         return redirect()->route('devices.index')->with('success', 'Device created successfully!');
     }
@@ -56,7 +53,7 @@ class DevicesController extends Controller
         $validatedData = $request->validate([
             'androidId' => 'required|string',
             'windowsId' => 'required|string',
-            'kurslar_ids' => 'required|array',
+            'kurslar_ids' => 'sometimes|array', // Make kurslar_ids optional
         ]);
 
         $device = Device::findOrFail($id);
@@ -65,10 +62,13 @@ class DevicesController extends Controller
             'windowsId' => $validatedData['windowsId'],
         ]);
 
-        $device->kurslars()->sync($validatedData['kurslar_ids']);
+        // Check if kurslar_ids is set, otherwise use null
+        $kurslarIds = isset($validatedData['kurslar_ids']) ? $validatedData['kurslar_ids'] : null;
+        $device->kurslars()->sync($kurslarIds);
 
         return redirect()->route('devices.index')->with('success', 'Device updated successfully!');
     }
+
 
     public function destroy($id)
     {
