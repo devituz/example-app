@@ -8,6 +8,16 @@ use App\Models\Kurslar;
 
 class DevicesController extends Controller
 {
+
+
+
+//    public function list()
+//    {
+//        $devices = Device::with('kurslars')->get();
+//        $totalDevices = Device::count(); // Umumiy sonini hisoblash
+//        return view('devices.list', compact('devices', 'totalDevices'));
+//    }
+
     public function index()
     {
         $devices = Device::with('kurslars')->get();
