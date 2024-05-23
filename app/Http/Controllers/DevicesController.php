@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\Device;
@@ -8,16 +10,6 @@ use App\Models\Kurslar;
 
 class DevicesController extends Controller
 {
-
-
-
-//    public function list()
-//    {
-//        $devices = Device::with('kurslars')->get();
-//        $totalDevices = Device::count(); // Umumiy sonini hisoblash
-//        return view('devices.list', compact('devices', 'totalDevices'));
-//    }
-
     public function index()
     {
         $devices = Device::with('kurslars')->get();
@@ -33,12 +25,20 @@ class DevicesController extends Controller
     public function store(Request $request)
     {
         $validatedData = $request->validate([
+            'lastname' => 'required|string',
+            'firstname' => 'required|string',
+            'userimg' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'androidId' => 'required|string',
             'windowsId' => 'required|string',
             'kurslar_ids' => 'sometimes|array', // Make kurslar_ids optional
         ]);
 
+        $imagePath = $request->file('userimg')->store('userimages', 'public');
+
         $device = Device::create([
+            'lastname' => $validatedData['lastname'],
+            'firstname' => $validatedData['firstname'],
+            'userimg' => $imagePath,
             'androidId' => $validatedData['androidId'],
             'windowsId' => $validatedData['windowsId'],
             'token' => Str::random(40),
@@ -58,25 +58,41 @@ class DevicesController extends Controller
         return view('devices.edit', compact('device', 'courses'));
     }
 
+
     public function update(Request $request, $id)
     {
         $validatedData = $request->validate([
-            'androidId' => 'required|string',
-            'windowsId' => 'required|string',
+            'androidId' => 'required|string|max:255',
+            'windowsId' => 'required|string|max:255',
+            'lastname' => 'required|string|max:255',
+            'firstname' => 'required|string|max:255',
+            'userimg' => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'kurslar_ids' => 'sometimes|array', // Make kurslar_ids optional
         ]);
 
+        // Find the device by ID
         $device = Device::findOrFail($id);
-        $device->update([
-            'androidId' => $validatedData['androidId'],
-            'windowsId' => $validatedData['windowsId'],
-        ]);
+
 
         // Check if kurslar_ids is set, otherwise use null
         $kurslarIds = isset($validatedData['kurslar_ids']) ? $validatedData['kurslar_ids'] : null;
         $device->kurslars()->sync($kurslarIds);
 
-        return redirect()->route('devices.index')->with('success', 'Device updated successfully!');
+
+        if ($request->hasFile('userimg')) {
+            if ($device->category_img) {
+                $oldImagePath = 'public/' . $device->userimg;
+                if (Storage::exists($oldImagePath)) {
+                    Storage::delete($oldImagePath);
+                }
+            }
+
+            $path = $request->file('userimg')->store('images', 'public');
+            $validatedData['userimg'] = $path;
+        }
+
+        $device->update($validatedData);
+        return redirect()->route('devices.index')->with('success', 'Device updated successfully.');
     }
 
 
@@ -87,8 +103,3 @@ class DevicesController extends Controller
         return redirect()->route('devices.index')->with('success', 'Device deleted successfully!');
     }
 }
-
-
-
-
-

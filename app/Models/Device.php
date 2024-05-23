@@ -10,6 +10,9 @@ class Device extends Model
     use HasFactory;
 
     protected $fillable = [
+        'lastname',
+        'firstname',
+        'userimg',
         'androidId',
         'windowsId',
         'token',

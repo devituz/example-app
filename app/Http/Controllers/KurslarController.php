@@ -46,17 +46,23 @@ class KurslarController extends Controller
     public function edit($id)
     {
         $kurs = Kurslar::findOrFail($id);
+
         return view('kurslar.edit', compact('kurs'));
     }
 
 
     public function update(Request $request, $id)
     {
+
+
         $validatedData = $request->validate([
             'teachers_name' => 'required|string|max:255',
             'teachers_img' => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'courses_name' => 'required|string|max:255',
+
         ]);
+
+
 
         $kurs = Kurslar::findOrFail($id);
 
@@ -70,6 +76,9 @@ class KurslarController extends Controller
 
             $path = $request->file('teachers_img')->store('images', 'public');
             $validatedData['teachers_img'] = $path;
+
+
+
         }
 
         $kurs->update($validatedData);

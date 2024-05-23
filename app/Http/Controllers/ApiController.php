@@ -4,11 +4,15 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Device;
-
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Validator; // For validation
 
 class ApiController extends Controller
 {
-    public function getAllDevices()
+
+    public function getAllDevices(Request $request)
     {
         $devices = Device::all(['id', 'androidId', 'windowsId', 'token']);
         $devices = $devices->map(function ($device) {
@@ -24,8 +28,8 @@ class ApiController extends Controller
 
         $response = response()->json($devices);
 
-        // Check if the request is coming from a browser
-        if ($response->getStatusCode() == 200 && strpos(request()->header('User-Agent'), 'Mozilla') !== false) {
+
+        if ($request->header('User-Agent') && strpos($request->header('User-Agent'), 'Mozilla') !== false) {
             return response('<h1 align="center">404 Not Found</h1>', 404);
         }
 
@@ -33,7 +37,80 @@ class ApiController extends Controller
     }
 
 
-    public function getDeviceWithToken(Request $request)
+    public function updateProfile(Request $request)
+    {
+        // Log all incoming request data
+        Log::info("Request data: " . json_encode($request->all()));
+
+        $validator = Validator::make($request->all(), [
+            'firstname' => 'required|string',
+            'lastname' => 'required|string',
+            'userimg' => 'sometimes|file', // Faylni yuklashga ruxsat berish
+        ]);
+
+        if ($validator->fails()) {
+            Log::error("Validation errors: " . json_encode($validator->errors()));
+            return response()->json($validator->errors(), 422);
+        }
+
+        $token = $request->bearerToken();
+        Log::info("Bearer token: " . $token);
+
+        $device = Device::where('token', $token)->first();
+
+        if (!$device) {
+            Log::error("Device not found for token: " . $token);
+            return response()->json(['message' => 'Token not found'], 404);
+        }
+
+        // Update firstname and lastname
+        $device->firstname = $request->input('firstname');
+        $device->lastname = $request->input('lastname');
+
+        if ($request->hasFile('userimg')) {
+            // Delete existing image if present
+            if ($device->userimg) {
+                $oldImagePath = 'public/' . $device->userimg;
+                if (Storage::exists($oldImagePath)) {
+                    Storage::delete($oldImagePath);
+                }
+            }
+
+            // Upload new user image
+            $path = $request->file('userimg')->store('images', 'public');
+            // Fayl nomini JSON javobida saqlash uchun
+            $device->userimg = $path;
+        }
+
+        $device->save();
+
+        Log::info("Profile updated successfully for device ID: " . $device->id);
+
+        // Fayl nomini JSON javobida qaytarish
+        return response()->json(['message' => 'Profile updated successfully', 'device' => $device]);
+    }
+
+
+
+
+
+
+    public function getme(Request $request)
+    {
+        $token = $request->bearerToken();
+        $device = Device::where('token', $token)->firstOrFail();
+
+        $response = [
+            'id' => $device->id,
+            'lastname' => $device->lastname,
+            'firstname' => $device->firstname,
+            'userimg' => url('storage/' . $device->userimg),
+        ];
+
+        return response()->json($response);
+    }
+
+    public function kurslarget(Request $request)
     {
         $token = $request->bearerToken();
         $device = Device::where('token', $token)->firstOrFail();
@@ -62,9 +139,9 @@ class ApiController extends Controller
         });
 
 
-        if ($courses->isEmpty()) {
-            $courses = [['empty' => 'Sizda hechqanday kurs yo\'q']];
-        }
+//        if ($courses->isEmpty()) {
+//            $courses = [['empty' => 'Sizda hechqanday kurs yo\'q']];
+//        }
 
         return response()->json($courses);
     }

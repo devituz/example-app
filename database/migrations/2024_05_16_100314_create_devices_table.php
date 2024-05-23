@@ -12,6 +12,9 @@ return new class extends Migration {
     {
         Schema::create('devices', function (Blueprint $table) {
             $table->id();
+            $table->string('lastname');
+            $table->string('firstname');
+            $table->string('userimg');
             $table->string('androidId');
             $table->string('windowsId');
             $table->string('token')->unique()->nullable();

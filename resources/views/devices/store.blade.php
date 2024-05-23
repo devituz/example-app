@@ -7,11 +7,38 @@
                 <div class="card">
                     <div class="card-header">{{ __('Create Device') }}</div>
                     <div class="card-body">
-                        <form method="POST" action="{{ route('devices.store') }}">
+                        <form method="POST" action="{{ route('devices.store') }}" enctype="multipart/form-data">
                             @csrf
                             <div class="form-group">
+                                <label for="lastname">{{ __('Last Name') }}</label>
+                                <input id="lastname" type="text" class="form-control @error('lastname') is-invalid @enderror" name="lastname" value="{{ old('lastname') }}" required autocomplete="lastname" autofocus>
+                                @error('lastname')
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                                @enderror
+                            </div>
+                            <div class="form-group">
+                                <label for="firstname">{{ __('First Name') }}</label>
+                                <input id="firstname" type="text" class="form-control @error('firstname') is-invalid @enderror" name="firstname" value="{{ old('firstname') }}" required autocomplete="firstname">
+                                @error('firstname')
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                                @enderror
+                            </div>
+                            <div class="form-group">
+                                <label for="userimg">{{ __('User Image') }}</label>
+                                <input id="userimg" type="file" class="form-control @error('userimg') is-invalid @enderror" name="userimg" required>
+                                @error('userimg')
+                                <span class="invalid-feedback" role="alert">
+                                    <strong>{{ $message }}</strong>
+                                </span>
+                                @enderror
+                            </div>
+                            <div class="form-group">
                                 <label for="androidId">{{ __('Android ID') }}</label>
-                                <input id="androidId" type="text" class="form-control @error('androidId') is-invalid @enderror" name="androidId" value="{{ old('androidId') }}" required autocomplete="androidId" autofocus>
+                                <input id="androidId" type="text" class="form-control @error('androidId') is-invalid @enderror" name="androidId" value="{{ old('androidId') }}" required autocomplete="androidId">
                                 @error('androidId')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>

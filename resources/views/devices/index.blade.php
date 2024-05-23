@@ -13,6 +13,9 @@
             <thead>
             <tr>
                 <th>ID</th>
+                <th>Last Name</th>
+                <th>First Name</th>
+                <th>Image</th>
                 <th>Android ID</th>
                 <th>Windows ID</th>
                 <th>Courses</th>
@@ -23,10 +26,15 @@
             @foreach($devices as $device)
                 <tr>
                     <td>{{ $device->id }}</td>
+                    <td>{{ $device->lastname }}</td>
+                    <td>{{ $device->firstname }}</td>
+                    <td>
+                        <img src="{{ asset('storage/' . $device->userimg) }}" alt="User Image" width="50" height="50">
+                    </td>
                     <td>{{ $device->androidId }}</td>
                     <td>{{ $device->windowsId }}</td>
                     <td>
-                        @if ($device->kurslars)
+                        @if ($device->kurslars->isNotEmpty())
                             @foreach ($device->kurslars as $kurslar)
                                 {{ $kurslar->courses_name }}<br>
                             @endforeach
