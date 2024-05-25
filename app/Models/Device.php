@@ -22,6 +22,9 @@ class Device extends Model
     {
         return $this->belongsToMany(Kurslar::class, 'device_kurslar');
     }
+
+
+
 }
 
 

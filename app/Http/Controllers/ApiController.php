@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use App\Models\Device;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Validator; // For validation
+use Illuminate\Support\Facades\Validator;
+use function PHPUnit\Framework\isEmpty;
+
+// For validation
 
 class ApiController extends Controller
 {
@@ -39,6 +43,8 @@ class ApiController extends Controller
 
     public function updateProfile(Request $request)
     {
+
+
         // Log all incoming request data
         Log::info("Request data: " . json_encode($request->all()));
 
@@ -54,6 +60,7 @@ class ApiController extends Controller
         }
 
         $token = $request->bearerToken();
+
         Log::info("Bearer token: " . $token);
 
         $device = Device::where('token', $token)->first();
@@ -63,12 +70,10 @@ class ApiController extends Controller
             return response()->json(['message' => 'Token not found'], 404);
         }
 
-        // Update firstname and lastname
         $device->firstname = $request->input('firstname');
         $device->lastname = $request->input('lastname');
 
         if ($request->hasFile('userimg')) {
-            // Delete existing image if present
             if ($device->userimg) {
                 $oldImagePath = 'public/' . $device->userimg;
                 if (Storage::exists($oldImagePath)) {
@@ -87,18 +92,23 @@ class ApiController extends Controller
         Log::info("Profile updated successfully for device ID: " . $device->id);
 
         // Fayl nomini JSON javobida qaytarish
-        return response()->json(['message' => 'Profile updated successfully', 'device' => $device]);
+        return response()->json(['message' => 'Profile updated successfully']);
     }
-
-
-
-
 
 
     public function getme(Request $request)
     {
         $token = $request->bearerToken();
-        $device = Device::where('token', $token)->firstOrFail();
+
+        if (!$token) {
+            return response()->json(['error' => 'Token topilmadi'], 400);
+        }
+
+        try {
+            $device = Device::where('token', $token)->firstOrFail();
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['error' => 'Qurilma topilmadi'], 404);
+        }
 
         $response = [
             'id' => $device->id,
@@ -109,6 +119,7 @@ class ApiController extends Controller
 
         return response()->json($response);
     }
+
 
     public function kurslarget(Request $request)
     {
