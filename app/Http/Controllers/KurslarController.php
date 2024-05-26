@@ -8,18 +8,20 @@ use Illuminate\Support\Facades\Storage;
 
 class KurslarController extends Controller
 {
-    public function index()
+    public function index(): \Illuminate\Http\JsonResponse
     {
         $kurslar = Kurslar::all();
-        return view('kurslar.index', compact('kurslar'));
+
+        // Har bir kursning 'teachers_img' maydonini to'liq URL bilan yangilash
+        foreach ($kurslar as $kurs) {
+            $kurs->teachers_img = url('storage/' . $kurs->teachers_img);
+        }
+
+        return response()->json($kurslar, 200);
     }
 
-    public function create()
-    {
-        return view('kurslar.create');
-    }
 
-    public function store(Request $request)
+    public function store(Request $request): \Illuminate\Http\JsonResponse
     {
         $validatedData = $request->validate([
             'teachers_name' => 'required|string|max:255',
@@ -32,37 +34,33 @@ class KurslarController extends Controller
             $validatedData['teachers_img'] = $path;
         }
 
-        Kurslar::create($validatedData);
-        return redirect()->route('kurslar.index');
+        $kurs = Kurslar::create($validatedData);
+
+        return response()->json([
+            'message' => 'Kurs created successfully',
+            'kurs' => $kurs,
+        ], 201);
     }
 
-
-    public function show($id)
-    {
-        $kurs = Kurslar::findOrFail($id);
-        return view('kurslar.show', compact('kurs'));
-    }
-
-    public function edit($id)
+    public function show($id): \Illuminate\Http\JsonResponse
     {
         $kurs = Kurslar::findOrFail($id);
 
-        return view('kurslar.edit', compact('kurs'));
+        if ($kurs->teachers_img) {
+            $kurs->teachers_img = url('storage/' . $kurs->teachers_img);
+        }
+
+        return response()->json($kurs, 200);
     }
 
 
-    public function update(Request $request, $id)
+    public function update(Request $request, $id): \Illuminate\Http\JsonResponse
     {
-
-
         $validatedData = $request->validate([
             'teachers_name' => 'required|string|max:255',
             'teachers_img' => 'sometimes|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
             'courses_name' => 'required|string|max:255',
-
         ]);
-
-
 
         $kurs = Kurslar::findOrFail($id);
 
@@ -76,23 +74,36 @@ class KurslarController extends Controller
 
             $path = $request->file('teachers_img')->store('images', 'public');
             $validatedData['teachers_img'] = $path;
-
-
-
         }
 
         $kurs->update($validatedData);
-        return redirect()->route('kurslar.index')->with('success', 'Course updated successfully.');
+
+        // 'teachers_img' maydonini to'liq URL bilan yangilash
+        if ($kurs->teachers_img) {
+            $kurs->teachers_img = url('storage/' . $kurs->teachers_img);
+        }
+
+        return response()->json([
+            'message' => 'Kurs updated successfully',
+        ], 200); // 200 OK
     }
 
 
-    public function destroy($id)
+    public function destroy($id): \Illuminate\Http\JsonResponse
     {
         $kurs = Kurslar::findOrFail($id);
+
+        // Eski rasmni o'chirish
         if ($kurs->teachers_img) {
             Storage::delete('public/' . $kurs->teachers_img);
         }
+
+        // Kursni o'chirish
         $kurs->delete();
-        return redirect()->route('kurslar.index');
+
+        return response()->json([
+            'message' => 'Kurs deleted successfully',
+        ], 200); // 200 No Content
     }
+
 }

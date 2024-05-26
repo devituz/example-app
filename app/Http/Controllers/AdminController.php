@@ -10,7 +10,7 @@ use App\Models\Admin;
 
 class AdminController extends Controller
 {
-    public function login(Request $request)
+    public function login(Request $request): \Illuminate\Http\JsonResponse
     {
         $validator = validator($request->all(), [
             'phone_number' => 'required|string',
@@ -36,7 +36,7 @@ class AdminController extends Controller
         ]);
     }
 
-    public function getAdminMe(Request $request)
+    public function getAdminMe(Request $request): \Illuminate\Http\JsonResponse
     {
         $token = $request->bearerToken();
 
@@ -47,10 +47,80 @@ class AdminController extends Controller
             'name' => $admin->name,
             'last_name' => $admin->last_name,
             'phone_number' => $admin->phone_number,
-            'password' => $admin->password,
         ];
 
         return response()->json($response);
     }
+
+    public function updateProfile(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $validator = validator($request->all(), [
+            'name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'phone_number' => 'required|string|max:15',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $token = $request->bearerToken();
+        $admin = Admin::where('token', $token)->firstOrFail();
+
+        $admin->name = $request->input('name');
+        $admin->last_name = $request->input('last_name');
+        $admin->phone_number = $request->input('phone_number');
+        $admin->save();
+
+        return response()->json([
+            'message' => 'Profile updated successfully',
+            'admin' => $admin
+        ]);
+    }
+
+    public function updatePassword(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $validator = validator($request->all(), [
+            'old_password' => 'required|string',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $token = $request->bearerToken();
+        $admin = Admin::where('token', $token)->firstOrFail();
+
+        if (!Hash::check($request->input('old_password'), $admin->password)) {
+            return response()->json(['error' => 'Old password is incorrect'], 401);
+        }
+
+        $admin->password = Hash::make($request->input('new_password'));
+        $admin->save();
+
+        return response()->json([
+            'message' => 'Password updated successfully',
+        ]);
+    }
+
+    public function logout(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $token = $request->bearerToken();
+        $admin = Admin::where('token', $token)->first();
+
+        if ($admin) {
+            $admin->token = null;
+            $admin->save();
+
+            return response()->json([
+                'message' => 'Logged out successfully',
+            ]);
+        }
+
+        return response()->json(['error' => 'Invalid token'], 401);
+    }
+
+
 
 }
