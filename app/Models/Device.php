@@ -24,7 +24,6 @@ class Device extends Model
     }
 
 
-
 }
 
 

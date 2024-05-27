@@ -7,9 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\Device;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Validator;
-use function PHPUnit\Framework\isEmpty;
+
 
 // For validation
 
@@ -121,7 +120,7 @@ class ApiController extends Controller
     }
 
 
-    public function kurslarget(Request $request)
+    public function getDeviceWithToken(Request $request)
     {
         $token = $request->bearerToken();
         $device = Device::where('token', $token)->firstOrFail();
@@ -156,5 +155,8 @@ class ApiController extends Controller
 
         return response()->json($courses);
     }
+
+
+
 
 }

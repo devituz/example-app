@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -13,14 +14,30 @@ class DevicesController extends Controller
     public function index()
     {
         $devices = Device::with('kurslars')->get();
-        return view('devices.index', compact('devices'));
+
+        $formattedDevices = $devices->map(function ($device) {
+            $courses = $device->kurslars->pluck('courses_name')->toArray();
+            return [
+                'id' => $device->id,
+                'lastname' => $device->lastname,
+                'firstname' => $device->firstname,
+                'userimg' => url('storage/' . $device->userimg),
+                'androidId' => $device->androidId,
+                'windowsId' => $device->windowsId,
+                'token' => $device->token,
+//                'created_at' => $device->created_at,
+//                'updated_at' => $device->updated_at,
+                'kurslars' => $courses,
+            ];
+        });
+
+        return response()->json($formattedDevices, 200);
     }
 
-    public function create()
-    {
-        $courses = Kurslar::all();
-        return view('devices.store', compact('courses'));
-    }
+
+
+
+
 
     public function store(Request $request)
     {
@@ -33,30 +50,36 @@ class DevicesController extends Controller
             'kurslar_ids' => 'sometimes|array', // Make kurslar_ids optional
         ]);
 
-        $imagePath = $request->file('userimg')->store('userimages', 'public');
+        DB::beginTransaction();
 
-        $device = Device::create([
-            'lastname' => $validatedData['lastname'],
-            'firstname' => $validatedData['firstname'],
-            'userimg' => $imagePath,
-            'androidId' => $validatedData['androidId'],
-            'windowsId' => $validatedData['windowsId'],
-            'token' => Str::random(40),
-        ]);
+        try {
+            $imagePath = $request->file('userimg')->store('userimages', 'public');
 
-        if (isset($validatedData['kurslar_ids'])) {
-            $device->kurslars()->sync($validatedData['kurslar_ids']);
+            $device = Device::create([
+                'lastname' => $validatedData['lastname'],
+                'firstname' => $validatedData['firstname'],
+                'userimg' => $imagePath,
+                'androidId' => $validatedData['androidId'],
+                'windowsId' => $validatedData['windowsId'],
+                'token' => Str::random(40),
+            ]);
+
+            if (isset($validatedData['kurslar_ids'])) {
+                $device->kurslars()->sync($validatedData['kurslar_ids']);
+            }
+
+            DB::commit();
+
+            return response()->json(['message' => 'Device created successfully', 'data' => $device], 201);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Failed to create device', 'error' => $e->getMessage()], 500);
         }
-
-        return redirect()->route('devices.index')->with('success', 'Device created successfully!');
     }
 
-    public function edit($id)
-    {
-        $device = Device::findOrFail($id);
-        $courses = Kurslar::all();
-        return view('devices.edit', compact('device', 'courses'));
-    }
+
+
 
 
     public function update(Request $request, $id)
@@ -70,36 +93,31 @@ class DevicesController extends Controller
             'kurslar_ids' => 'sometimes|array', // Make kurslar_ids optional
         ]);
 
-        // Find the device by ID
         $device = Device::findOrFail($id);
 
-
-        // Check if kurslar_ids is set, otherwise use null
         $kurslarIds = isset($validatedData['kurslar_ids']) ? $validatedData['kurslar_ids'] : null;
         $device->kurslars()->sync($kurslarIds);
 
-
         if ($request->hasFile('userimg')) {
-            if ($device->category_img) {
-                $oldImagePath = 'public/' . $device->userimg;
-                if (Storage::exists($oldImagePath)) {
-                    Storage::delete($oldImagePath);
-                }
+            // Delete old image if exists
+            if ($device->userimg) {
+                Storage::delete('public/' . $device->userimg);
             }
-
             $path = $request->file('userimg')->store('images', 'public');
             $validatedData['userimg'] = $path;
         }
 
         $device->update($validatedData);
-        return redirect()->route('devices.index')->with('success', 'Device updated successfully.');
+        return response()->json(['message' => 'Device updated successfully', 'data' => $device], 200);
     }
+
 
 
     public function destroy($id)
     {
         $device = Device::findOrFail($id);
         $device->delete();
-        return redirect()->route('devices.index')->with('success', 'Device deleted successfully!');
+        return response()->json(['message' => 'Device deleted successfully'], 200);
     }
+
 }

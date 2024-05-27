@@ -24,7 +24,7 @@ class AdminController extends Controller
         $admin = Admin::where('phone_number', $request->phone_number)->first();
 
         if (!$admin || !Hash::check($request->password, $admin->password)) {
-            return response()->json(['error' => 'Invalid credentials'], 401);
+            return response()->json(['error' => 'Login parol xato'], 401);
         }
 
         $admin->token = Str::random(60);

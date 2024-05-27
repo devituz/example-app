@@ -1,6 +1,7 @@
 <?php
 
 
+use App\Http\Controllers\DevicesController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -9,3 +10,4 @@ Route::get('/', function () {
 });
 
 
+//Route::resource('devices', DevicesController::class);

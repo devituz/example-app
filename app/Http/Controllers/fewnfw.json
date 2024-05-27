@@ -1,0 +1,41 @@
+{
+    "data": [
+        {
+            "id": 1,
+            "lastname": "Smith",
+            "firstname": "John",
+            "userimg": "userimages/eO9L3mznA1FshCp6jfJQQOwc1yXIiIrwof7ijbr4.jpg",
+            "androidId": "123456789",
+            "windowsId": "987654321",
+            "token": "KLPzwH5CiU03WEJbjUoO1wMPpwpwbb646AswCoaD",
+            "created_at": "2024-05-27T08:11:02.000000Z",
+            "updated_at": "2024-05-27T08:11:02.000000Z",
+            "kurslars": [
+                {
+                    "id": 9,
+                    "teachers_name": "zor",
+                    "teachers_img": "images/96MoN1z2ITlm8YPGlZFWGZ7L3u4cewc7cHnvnz28.png",
+                    "courses_name": "pys",
+                    "created_at": "2024-05-26T15:11:16.000000Z",
+                    "updated_at": "2024-05-26T15:11:16.000000Z",
+                    "pivot": {
+                        "device_id": 1,
+                        "kurslar_id": 9
+                    }
+                },
+                {
+                    "id": 8,
+                    "teachers_name": "husanboy",
+                    "teachers_img": "images/KTnGpuHfVfeiTis4dBHRkJevaGLZiocmwSQ4u0Tm.png",
+                    "courses_name": "py",
+                    "created_at": "2024-05-26T15:07:31.000000Z",
+                    "updated_at": "2024-05-26T15:07:31.000000Z",
+                    "pivot": {
+                        "device_id": 1,
+                        "kurslar_id": 8
+                    }
+                }
+            ]
+        }
+    ]
+}

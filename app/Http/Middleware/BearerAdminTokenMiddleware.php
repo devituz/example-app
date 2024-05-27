@@ -16,7 +16,7 @@ class BearerAdminTokenMiddleware
         // Agar token bo'sh yoki Device modelida shu token bilan biriktirilgan qurilma mavjud emas bo'lsa
         if (!$token || !Admin::where('token', $token)->exists()) {
             // 401 Unauthorized xatolik qaytarish
-            return response()->json(['error' => 'Unauthorized'], 401);
+            return response()->json(['error' => 'Unauthorizedsss'], 401);
         }
 
         // Check for all HTTP methods (GET, POST, PUT, DELETE)

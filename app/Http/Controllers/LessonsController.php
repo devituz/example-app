@@ -2,30 +2,29 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Category;
 use App\Models\Lessons;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Throwable;
 
-
 class LessonsController extends Controller
 {
-    public function index()
+    public function index(): \Illuminate\Http\JsonResponse
     {
+
+
         $lessons = Lessons::all();
-        return view('lessons.index', compact('lessons'));
+
+        foreach ($lessons as $less) {
+            $less->video = url('storage/' . $less->video);
+        }
+
+        return response()->json($lessons, 200);
     }
 
-    public function create()
-    {
-        $categories = Category::all();
-        return view('lessons.create', compact('categories'));
-    }
-
-    public function store(Request $request)
+    public function store(Request $request): \Illuminate\Http\JsonResponse
     {
         try {
             $validatedData = $request->validate([
@@ -33,45 +32,65 @@ class LessonsController extends Controller
                 'description' => 'required|string|max:255',
                 'video' => 'required|mimes:mp4,mov,ogg,webm',
                 'category_id' => 'required|integer|exists:category,id',
+            ], [
+                'category_id.exists' => 'Kategory tanlanmagan',
             ]);
 
-            $category = Category::find($validatedData['category_id']);
-            if (!$category) {
-                return redirect()->back()->withErrors(['category' => 'Invalid category ID']);
-            }
-
             if ($request->hasFile('video')) {
-                $path = $request->file('video')->store('videos', 'public');
+                $file = $request->file('video');
+                $path = $file->store('videos', 'public');
+
+                // FFmpeg ni sozlash
+                $ffmpegPath = env('FFMPEG_BINARIES');
+                $ffprobePath = env('FFPROBE_BINARIES');
+
+                $ffmpeg = \FFMpeg\FFMpeg::create([
+                    'ffmpeg.binaries' => $ffmpegPath,
+                    'ffprobe.binaries' => $ffprobePath,
+                ]);
+
+                $video = $ffmpeg->open(storage_path('app/public/' . $path));
+                $dimensions = $video->getStreams()->videos()->first()->getDimensions();
+                $width = $dimensions->getWidth();
+                $height = $dimensions->getHeight();
+
+                if ($width != 1920 || $height != 1080) {
+                    return response()->json(['message' => 'Videoning o\'lchami noto\'g\'ri. Kenglik 1920 va balandlik 1080 bo\'lishi kerak.'], 422);
+                }
+
                 $validatedData['video'] = $path;
             }
 
-            Lessons::create($validatedData);
-            return redirect()->route('lessons.index');
+            $lesson = Lessons::create($validatedData);
+
+            return response()->json(['message' => 'Dars muvaffaqiyatli yuklandi'], 201);
+
 
         } catch (ValidationException $e) {
-            return back()->withErrors($e->validator->errors());
+            return response()->json(['message' => 'Validatsiya xatosi', 'errors' => $e->errors()], 422);
         } catch (Throwable $e) {
             report($e);
-            return back()->withErrors(['error' => 'An error occurred. Please try again.']);
+            return response()->json(['message' => $e->getMessage()], 500);
         }
     }
 
 
-    public function show($id)
+    public function show($id): \Illuminate\Http\JsonResponse
     {
-        $lesson = Lessons::findOrFail($id);
-        return view('lessons.show', compact('lesson'));
+        try {
+            $lesson = Lessons::findOrFail($id);
+
+            // 'storage/' dan o'lib beryapti
+            $lesson->video = url('storage/' . $lesson->video);
+
+            return response()->json(['message' => 'Success', 'data' => $lesson], 200);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'Lesson not found'], 404);
+        }
     }
 
-    public function edit($id)
-    {
-        $lesson = Lessons::findOrFail($id);
-        $categories = Category::all(); // Corrected to 'categories'
-        return view('lessons.edit', compact('lesson', 'categories'));
-    }
 
-
-    public function update(Request $request, $id)
+    public function update(Request $request, $id): \Illuminate\Http\JsonResponse
     {
         try {
             $validatedData = $request->validate([
@@ -79,44 +98,69 @@ class LessonsController extends Controller
                 'description' => 'required|string|max:255',
                 'video' => 'nullable|mimes:mp4,mov,ogg,webm',
                 'category_id' => 'required|integer|exists:category,id',
+            ], [
+                'category_id.exists' => 'Kategoriya tanlang',
             ]);
 
             $lesson = Lessons::findOrFail($id);
 
-            $category = Category::find($validatedData['category_id']);
-            if (!$category) {
-                return redirect()->back()->withErrors(['category' => 'Invalid category ID']);
-            }
-
             if ($request->hasFile('video')) {
                 if ($lesson->video) {
-                    $oldVideoPath = storage_path('app/public/' . $lesson->video);
-                    if (File::exists($oldVideoPath)) {
-                        File::delete($oldVideoPath);
-                    }
+                    Storage::delete('public/' . $lesson->video);
                 }
+
                 $path = $request->file('video')->store('videos', 'public');
                 $validatedData['video'] = $path;
+
+                // FFmpeg ni sozlash
+                $ffmpegPath = env('FFMPEG_BINARIES');
+                $ffprobePath = env('FFPROBE_BINARIES');
+
+                $ffmpeg = \FFMpeg\FFMpeg::create([
+                    'ffmpeg.binaries' => $ffmpegPath,
+                    'ffprobe.binaries' => $ffprobePath,
+                ]);
+
+                $video = $ffmpeg->open(storage_path('app/public/' . $path));
+                $dimensions = $video->getStreams()->videos()->first()->getDimensions();
+                $width = $dimensions->getWidth();
+                $height = $dimensions->getHeight();
+
+                if ($width != 1920 || $height != 1080) {
+                    // Agar o'lcham noto'g'ri bo'lsa, eski videoni o'chirib tashlaymiz
+                    Storage::delete('public/' . $path);
+                    return response()->json(['message' => 'Videoning o\'lchami noto\'g\'ri. Kenglik 1920 va balandlik 1080 bo\'lishi kerak.'], 422);
+                }
             }
 
             $lesson->update($validatedData);
-            return redirect()->route('lessons.index')->with('success', 'Lesson updated successfully.');
+
+            return response()->json(['message' => 'Dars muvaffaqiyatli yangilandi', 'data' => $lesson], 200);
 
         } catch (ValidationException $e) {
-            return back()->withErrors($e->validator->errors());
-        } catch (ModelNotFoundException $e) {
-            return back()->withErrors(['lesson' => 'Lesson not found.']);
+            return response()->json(['message' => 'Validatsiya xatosi', 'errors' => $e->errors()], 422);
         } catch (Throwable $e) {
             report($e);
-            return back()->withErrors(['error' => 'An error occurred. Please try again.']);
+            return response()->json(['message' => $e->getMessage()], 500);
         }
     }
 
 
-    public function destroy($id)
+
+    public function destroy($id): \Illuminate\Http\JsonResponse
     {
-        $lesson = Lessons::findOrFail($id);
-        $lesson->delete();
-        return redirect()->route('lessons.index');
+        try {
+            $lesson = Lessons::findOrFail($id);
+            if ($lesson->video) {
+                Storage::delete('public/' . $lesson->video);
+            }
+            $lesson->delete();
+            return response()->json(['message' => 'Lesson deleted successfully'], 200);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['message' => 'Lesson not found'], 404);
+        } catch (Throwable $e) {
+            report($e);
+            return response()->json(['message' => 'An error occurred. Please try again.'], 500);
+        }
     }
 }

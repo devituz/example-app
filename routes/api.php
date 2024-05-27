@@ -3,13 +3,14 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DevicesController;
 use App\Http\Controllers\KurslarController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\LessonsController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/login', [AdminController::class, 'login']);
 
-Route::middleware(['auth.admin.token'])->group(function () {
+Route::middleware(['admin'])->group(function () {
     Route::get('/getme', [AdminController::class, 'getAdminMe'])->name('malumotlarni olish');
     Route::post('update-profile', [AdminController::class, 'updateProfile']);
     Route::post('update-password', [AdminController::class, 'updatePassword']);
@@ -23,7 +24,6 @@ Route::middleware(['auth.admin.token'])->group(function () {
     Route::delete('/kurslar/{id}', [KurslarController::class, 'destroy']);
 
 
-
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/categories/{id}', [CategoryController::class, 'show']);
     Route::post('/categories', [CategoryController::class, 'store']);
@@ -31,23 +31,34 @@ Route::middleware(['auth.admin.token'])->group(function () {
     Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
 
 
+    Route::get('/lessons', [LessonsController::class, 'index']);
+    Route::post('/lessons', [LessonsController::class, 'store']);
+    Route::get('/lessons/{id}', [LessonsController::class, 'show']);
+    Route::post('/lessons/update/{id}', [LessonsController::class, 'update']);
+    Route::delete('/lessons/{id}', [LessonsController::class, 'destroy']);
+
+    Route::get('/admin/devices', [DevicesController::class, 'index']);
+    Route::post('/admin/devices', [DevicesController::class, 'store']);
+    Route::post('/admin/devices/update/{id}', [DevicesController::class, 'update']);
+    Route::delete('/admin/devices/{id}', [DevicesController::class, 'destroy']);
+
+
+
+
+
 
 });
 
-
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
 
 Route::get('/devices', [ApiController::class, 'getAllDevices']);
 
 
-Route::group(['middleware' => 'api'], function () {
+Route::middleware(['auth.bearer'])->group(function () {
 
-    //    devices bo'limi boshi'
     Route::post('/devices/update', [ApiController::class, 'updateProfile']);
-    Route::get('/devices/kurslarget', [ApiController::class, 'kurslarget']);
+    Route::get('/devices/kurslarget', [ApiController::class, 'getDeviceWithToken']);
     Route::get('/devices/getme', [ApiController::class, 'getme']);
-    //    devices bo'limi tugashi'
+
 
 });
+
